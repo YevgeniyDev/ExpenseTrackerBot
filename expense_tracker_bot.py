@@ -5,9 +5,22 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 
 # Loading logging configuration from JSON file
 def setup_logging(config_file):
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-        logging.config.dictConfig(config)
+    try:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+            logging.config.dictConfig(config)
+    except FileNotFoundError:
+        # Log an error message if the config file is not found
+        print(f"Error: Logging configuration file '{config_file}' not found.")
+        return
+    except json.JSONDecodeError:
+        # Log an error message if the config file is invalid JSON
+        print(f"Error: Invalid JSON format in logging configuration file '{config_file}'.")
+        return
+    except Exception as e:
+        # Log any other unexpected errors
+        print(f"Error: An unexpected error occurred: {e}")
+        return
 
 # Loading logging configuration
 setup_logging('D:\Coding\PythonCoding\ExpenseTracker\ExpenseTrackerBot\logging_config.json')
@@ -42,11 +55,11 @@ async def set_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Defining /balance command handler
 async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    balance = user_balances[user_id]
     
     if user_id not in user_balances:
         await update.message.reply_text("You haven't set your balance yet. Use /setbalance command to set it.")
     
+    balance = user_balances[user_id]
     await update.message.reply_text(f"Your balance is currently {balance:.0f} tenge.")
 
 # Defining /updatebalance command handler
