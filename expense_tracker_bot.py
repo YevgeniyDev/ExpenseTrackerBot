@@ -80,7 +80,7 @@ async def update_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('7179677090:AAE6WIcnko1KOEhAYHVxVsZepFUII5mItzw').build()
+    application = ApplicationBuilder().token('BOT').build()
     
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler('setbalance', set_balance))
