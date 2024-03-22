@@ -138,7 +138,7 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     print('Starting bot...')
-    application = ApplicationBuilder().token('7179677090:AAE6WIcnko1KOEhAYHVxVsZepFUII5mItzw').build()
+    application = ApplicationBuilder().token('BOT').build()
     
     application.add_handler(CommandHandler("addexpense", add_expense))
     application.add_handler(CommandHandler("start", start))
