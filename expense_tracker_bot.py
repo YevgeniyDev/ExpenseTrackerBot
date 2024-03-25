@@ -35,6 +35,7 @@ user_balances = {}
 # Defining a logger
 logger = logging.getLogger(__name__)
 
+# Defining SQLite database function
 def add_expense_to_database(user_id, expense_type, amount, date, description):
     conn = sqlite3.connect('D:\Coding\PythonCoding\ExpenseTracker\ExpenseTrackerBot\expense_storage.db')
     cursor = conn.cursor()
@@ -42,13 +43,15 @@ def add_expense_to_database(user_id, expense_type, amount, date, description):
     conn.commit()
     conn.close()
 
+# Defining /start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.message.from_user.username
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Welcome to the Expense Tracking Bot, {username}!")
 
+# Defining /help command handler
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, 
-                                   text="List of available commands:\n/start - Start Expense Tracker\n/help - View the list of available commands\n/setbalance [number] - Set your current balance\n/balance - View your current balance\n/updatebalance [+/-number] - Update your current balance")
+                                   text="List of available commands:\n/start - Start Expense Tracker\n/help - View the list of available commands\n/setbalance [number] - Set your current balance\n/balance - View your current balance\n/updatebalance - Update your current balance\n/addexpense - Add a new expense\n/expenses - View all expenses\n/monthlyexpenses - View expenses for this month")
 
 # Defining /setbalance command handler
 async def set_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -79,26 +82,16 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Defining /updatebalance command handler
 async def update_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        update_amount = float(context.args[0])
-    except (IndexError, ValueError):
-        await update.message.reply_text("Please provide a valid balance.")
-        return
+    await update.message.reply_text("Please enter the amount you want to add/substract in format \"+/-[amount]\":")
 
-    # Setting the balance for the user
-    user_id = update.effective_user.id
-    if user_id not in user_balances:
-        await update.message.reply_text("You haven't set your balance yet. Use /setbalance command to set it.")
-    user_balances[user_id] += update_amount
-    await update.message.reply_text(f"You successfully changed your balance by {update_amount:.0f}")
-    logger.info(f"User {user_id} updated balance by {update_amount}")
+    context.user_data['state'] = 'update_balance'
+
 
 async def add_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-
     await update.message.reply_text("Please enter the amount of the expense:")
 
     context.user_data['state'] = 'amount'
+
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -131,6 +124,23 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Expense added successfully!")
         logger.info(f"User {user_id} added an expense of type - {context.user_data['expense_type']} with an amount {context.user_data['amount']} on {context.user_data['date']} stating a following description:\n\t{context.user_data['description']}")
         context.user_data.clear()
+    elif state == 'update_balance':
+        user_id = update.effective_user.id
+        update_value = update.message.text
+
+        if user_id not in user_balances:
+            await update.message.reply_text("You haven't set your balance yet. Use /setbalance command to set it.")
+
+        if update_value[0] == '-' or update_value[0] == '+':
+            update_value = int(update_value)
+            context.user_data['update_balance'] = update_value
+            user_balances[user_id] += int(update_value)
+            await update.message.reply_text(f"You successfully changed your balance by {update_value:.0f}")
+            logger.info(f"User {user_id} updated balance by {update_value}")
+        else:
+            await update.message.reply_text("Please provide a valid balance in format +/-[amount]:")
+            return
+
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f'Update {update} caused error {context.error}')
